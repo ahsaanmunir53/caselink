@@ -1,0 +1,19 @@
+[project]
+name = "caselink-backend"
+version = "0.1.0"
+description = "CaseLink: links scattered fraud reports into cases for analysts. AI suggests, rules and people decide."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B008"]  # B008: FastAPI uses File()/Form() defaults by design

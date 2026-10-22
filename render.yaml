@@ -1,0 +1,94 @@
+# Render Blueprint for CaseLink: the API (free web service) and the analyst app (free static site).
+# Render dashboard -> New -> Blueprint -> pick this repo. It asks once for every "sync: false" value.
+#
+# URLs are https://<name>.onrender.com when the name is free. If Render adds a suffix
+# (for example caselink-api-x7k2), put the real URLs into VITE_API_URL, ALLOWED_ORIGINS and
+# PUBLIC_APP_URL afterwards and redeploy both services.
+services:
+  # ------------------------------------------------------------------ API (sleeps after 15 min idle)
+  - type: web
+    name: caselink-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: APP_ENV
+        value: production
+      # A separate Neon project from Hoshiyar's (call it caselink). Use the direct host, not -pooler.
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      # Copy this value into the GitHub secret CRON_SECRET (Settings -> Secrets and variables -> Actions).
+      - key: CRON_SECRET
+        generateValue: true
+      # The app's URL, e.g. https://caselink-web.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: PUBLIC_APP_URL
+        sync: false
+      # Public demo: synthetic data, open reading, one-click demo logins. Set to false for real data.
+      - key: DEMO_MODE
+        value: "true"
+      - key: FOUR_EYES
+        value: "true"
+      # Optional: your own login on top of the demo accounts.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Optional link to Hoshiyar: its API URL and the INTEGRATION_KEY value from Hoshiyar's Render settings.
+      - key: HOSHIYAR_API_URL
+        sync: false
+      - key: HOSHIYAR_INTEGRATION_KEY
+        sync: false
+      # Optional daily digest to a Telegram channel.
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_ALERT_CHAT_ID
+        sync: false
+      - key: TRUSTED_PROXY_HOPS
+        value: "3"
+
+  # ------------------------------------------------------------------ Analyst app (static, does not sleep)
+  - type: web
+    name: caselink-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # The API's URL, e.g. https://caselink-api.onrender.com. Read at build time: redeploy after changing it.
+      - key: VITE_API_URL
+        sync: false

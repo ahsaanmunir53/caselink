@@ -1,0 +1,149 @@
+{
+  "generated_at": "2026-10-21T06:56:27+00:00",
+  "dataset": {
+    "reports": 275,
+    "operations": 12,
+    "one_off_reports": 45
+  },
+  "extraction": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "identifiers_injected": 477,
+    "identifiers_found": 477,
+    "by_kind": {
+      "phone": {
+        "injected": 340,
+        "found": 340,
+        "recall": 1.0
+      },
+      "domain": {
+        "injected": 50,
+        "found": 50,
+        "recall": 1.0
+      },
+      "iban": {
+        "injected": 54,
+        "found": 54,
+        "recall": 1.0
+      },
+      "license": {
+        "injected": 16,
+        "found": 16,
+        "recall": 1.0
+      },
+      "handle": {
+        "injected": 10,
+        "found": 10,
+        "recall": 1.0
+      },
+      "email": {
+        "injected": 7,
+        "found": 7,
+        "recall": 1.0
+      }
+    }
+  },
+  "rules_only": {
+    "precision": 1.0,
+    "recall": 0.7117,
+    "f1": 0.8316,
+    "pairs_predicted": 1528,
+    "pairs_true": 2147,
+    "pairs_correct": 1528
+  },
+  "rules_plus_suggestions_0_5": {
+    "precision": 0.9985,
+    "recall": 0.9329,
+    "f1": 0.9646,
+    "pairs_predicted": 2006,
+    "pairs_true": 2147,
+    "pairs_correct": 2003
+  },
+  "rules_plus_all_suggestions": {
+    "precision": 0.9719,
+    "recall": 0.9329,
+    "f1": 0.952,
+    "pairs_predicted": 2061,
+    "pairs_true": 2147,
+    "pairs_correct": 2003
+  },
+  "suggestions": {
+    "total": 38,
+    "correct": 31,
+    "wrong": 7,
+    "by_kind": {
+      "attach": 25,
+      "merge": 1,
+      "new_case": 12
+    }
+  },
+  "groups_per_operation": {
+    "OP-01": [
+      21,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "OP-02": [
+      17,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "OP-03": [
+      17,
+      1
+    ],
+    "OP-04": [
+      15,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "OP-05": [
+      13,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "OP-06": [
+      12,
+      1,
+      1,
+      1,
+      1
+    ],
+    "OP-07": [
+      22
+    ],
+    "OP-08": [
+      13,
+      5,
+      2
+    ],
+    "OP-09": [
+      18
+    ],
+    "OP-10": [
+      17,
+      2,
+      1
+    ],
+    "OP-11": [
+      12,
+      2
+    ],
+    "OP-12": [
+      16
+    ]
+  },
+  "seconds": 0.09
+}

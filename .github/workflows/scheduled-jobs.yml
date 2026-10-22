@@ -1,0 +1,32 @@
+# Nightly demo reset (20:30 UTC = 01:30 in Pakistan) and a daily digest to Telegram
+# (03:00 UTC = 08:00 in Pakistan, 11:00 in Singapore).
+# Set the repository variable BACKEND_URL and the secret CRON_SECRET (same value as on Render).
+name: Scheduled jobs
+
+on:
+  schedule:
+    - cron: "30 20 * * *"
+    - cron: "0 3 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "reset-demo, digest or rebuild"
+        default: digest
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    if: ${{ vars.BACKEND_URL != '' }}
+    steps:
+      - name: Pick the job
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "job=${{ inputs.job }}" >> "$GITHUB_OUTPUT";
+          elif [ "${{ github.event.schedule }}" = "30 20 * * *" ]; then echo "job=reset-demo" >> "$GITHUB_OUTPUT";
+          else echo "job=digest" >> "$GITHUB_OUTPUT"; fi
+      - name: Wake the API (free plan sleeps)
+        run: curl -fsS --max-time 90 "${{ vars.BACKEND_URL }}/api/health" > /dev/null || true
+      - name: Call the job
+        run: |
+          curl -fsS --max-time 120 -X POST -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.BACKEND_URL }}/api/cron/${{ steps.pick.outputs.job }}"

@@ -1,0 +1,8 @@
+{
+  "rules_only.precision": 1.0,
+  "rules_only.recall": 0.70,
+  "rules_plus_suggestions_0_5.precision": 0.99,
+  "rules_plus_suggestions_0_5.f1": 0.95,
+  "extraction.precision": 1.0,
+  "extraction.recall": 1.0
+}
