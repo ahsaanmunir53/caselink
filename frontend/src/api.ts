@@ -163,34 +163,44 @@ export function whenSignedOut(fn: () => void) {
   onSignedOut = fn;
 }
 
-// --------------------------------------------------------------------------- waking the server
+// --------------------------------------------------------------------------- waking the free server
+// Render's free plan stops the API after 15 quiet minutes; the next request starts it again, which
+// takes 30-60 seconds. A slow request alone proves nothing (an AI draft can take 10 seconds), so
+// when one is slow we ask /api/health: if that does not answer within 2 seconds either, the server
+// is asleep and the bottom bar shows until health answers.
 
 type WakeListener = (waking: boolean) => void;
 const wakeListeners = new Set<WakeListener>();
-let pending = 0;
-let wakeTimer: ReturnType<typeof setTimeout> | null = null;
-let serverAwake = false;
+let probing = false;
 
 export function onWaking(fn: WakeListener) {
   wakeListeners.add(fn);
   return () => void wakeListeners.delete(fn);
 }
 
-function started() {
-  pending += 1;
-  if (!serverAwake && !wakeTimer) {
-    wakeTimer = setTimeout(() => wakeListeners.forEach((fn) => fn(true)), 3500);
-  }
+function emitWaking(waking: boolean) {
+  wakeListeners.forEach((fn) => fn(waking));
 }
 
-function finished(ok: boolean) {
-  pending = Math.max(0, pending - 1);
-  if (ok) serverAwake = true;
-  if (serverAwake || pending === 0) {
-    if (wakeTimer) clearTimeout(wakeTimer);
-    wakeTimer = null;
-    wakeListeners.forEach((fn) => fn(false));
-  }
+/** Ask /api/health; show the bar if it is slow too, hide it when it answers. Resolves true if it answered. */
+export function probeHealth(showAfterMs: number): Promise<boolean> {
+  if (probing) return Promise.resolve(true);
+  probing = true;
+  let shown = false;
+  const show = setTimeout(() => {
+    shown = true;
+    emitWaking(true);
+  }, showAfterMs);
+  const controller = new AbortController();
+  const giveUp = setTimeout(() => controller.abort(), 150_000);
+  return fetch(`${API_URL}/api/health`, { cache: "no-store", signal: controller.signal })
+    .then((r) => r.ok, () => false)
+    .finally(() => {
+      clearTimeout(show);
+      clearTimeout(giveUp);
+      probing = false;
+      if (shown) emitWaking(false);
+    });
 }
 
 // --------------------------------------------------------------------------- requests
@@ -212,15 +222,15 @@ async function request<T>(method: string, path: string, body?: unknown, raw = fa
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
   }
-  started();
+  const slow = setTimeout(() => void probeHealth(2000), 3500);
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, { method, headers, body: payload });
   } catch {
-    finished(false);
     throw new ApiError(0, "The server could not be reached. Check your connection; if the demo was asleep, try again in a minute.");
+  } finally {
+    clearTimeout(slow);
   }
-  finished(true);
   if (res.status === 401 && token) {
     setSession(null);
     onSignedOut?.();
